@@ -21,7 +21,6 @@ setup(
     ],
     python_requires=">=3.13.0",
     install_requires=[
-         "anubis_core @ git+https://github.com/AnubisSystems/AnubisCore.git"
          "python-telegram-bot"
     ],
 )
