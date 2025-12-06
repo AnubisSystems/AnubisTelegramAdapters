@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="anubis_telegram_adapters",
+    name="AnubisTelegramAdapters",
     version="0.0.5",
     author="Jose Manuel Herera Saenz",
     author_email="incubadoradepollos@gmail.com",
@@ -21,6 +21,7 @@ setup(
     ],
     python_requires=">=3.13.0",
     install_requires=[
-         "python-telegram-bot"
+         "python-telegram-bot",
+         "AnubisCore @ git+https://github.com/AnubisSystems/AnubisCore.git"
     ],
 )
