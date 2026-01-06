@@ -31,7 +31,11 @@ class TelegramConversation(IConversationPort):
         self.context.user_data["esperando_imagen"] = True
     @bot_errors_handle
     async def mostrar_texto(self, texto):
-        await self.update.message.reply_text(texto)
+        await self.update.message.reply_text(texto,parse_mode="HTML")
+
+    @bot_errors_handle
+    async def mostrar_imagen(self, imagen, texto):
+        await self.update.message.reply_photo(imagen,caption=texto,parse_mode="HTML")
     
     async def mostrar_error(self, mensaje):
         await self.update.message.reply_text(f"❗<b>ERROR CRÍTICO</b>:\n {mensaje}\n Se ha cancelado el proceso",parse_mode="HTML" )        
