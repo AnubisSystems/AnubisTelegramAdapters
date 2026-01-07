@@ -29,6 +29,13 @@ class TelegramConversation(IConversationPort):
         await self.update.message.reply_text(prompt)
         self.context.user_data["pending_callback"] = on_response
         self.context.user_data["esperando_imagen"] = True
+    
+    @bot_errors_handle
+    async def preguntar_fichero(self, prompt, on_response):
+        await self.update.message.reply_text(prompt)
+        self.context.user_data["pending_callback"] = on_response
+        self.context.user_data["esperando_adjunto"] = True
+    
     @bot_errors_handle
     async def mostrar_texto(self, texto):
         await self.update.message.reply_text(texto,parse_mode="HTML")
@@ -39,6 +46,8 @@ class TelegramConversation(IConversationPort):
     
     async def mostrar_error(self, mensaje):
         await self.update.message.reply_text(f"❗<b>ERROR CRÍTICO</b>:\n {mensaje}\n Se ha cancelado el proceso",parse_mode="HTML" )        
+
+    
     
     @bot_errors_handle
     async def mostrar_resumen(self, titulo, datos: dict):
@@ -75,7 +84,8 @@ class TelegramBotCommand():
         self.application.add_handler(CommandHandler("cancel", self._cancel))
         self.application.add_handler(MessageHandler(filters.TEXT, self.handle_message))
         self.application.add_handler(MessageHandler(filters.PHOTO, self.handle_photo))
-        self.application.add_handler(CallbackQueryHandler(self.handle_callback))
+        self.application.add_handler(MessageHandler(filters.ATTACHMENT, self.handle_attachment))
+        self.application.add_handler(CallbackQueryHandler(self.handle_callback))        
         
     @bot_errors_handle
     def bind(self):
@@ -116,3 +126,15 @@ class TelegramBotCommand():
             file = await update.message.photo[-1].get_file()
             img_bytes = await file.download_as_bytearray()
             await cb(img_bytes)
+
+    async def handle_attachment(self, update, context):
+        print("pasamos por aqui")
+        if context.user_data.get("esperando_adjunto"):
+            cb = context.user_data.pop("pending_callback")
+            context.user_data.pop("esperando_adjunto")
+            document = update.message.document
+            file = await document.get_file()
+            file_bytes = await file.download_as_bytearray()            
+            await cb(file_bytes)
+
+
