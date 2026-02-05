@@ -17,7 +17,7 @@ def requires_auth(func):
         user_id = update.effective_user.id if update.effective_user else None
 
         if len(self.id_auths) > 0:
-            if user_id not in self.id_auths:
+            if str(user_id) not in self.id_auths:
                 await update.message.reply_text("❌ No estás autorizado para usar este bot.")
                 return
 
