@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="AnubisTelegramAdapters",
-    version="0.0.7",
+    version="0.0.8",
     author="Jose Manuel Herera Saenz",
     author_email="incubadoradepollos@gmail.com",
     description="Core for Anubis System",

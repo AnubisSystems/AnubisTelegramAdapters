@@ -9,6 +9,22 @@ from .exceptions import TelegramInvalidTokenException, TelegramBotException, Err
 
 from anubis_core.ports.bots import IBotFlowPort, IConversationPort
 
+from functools import wraps
+
+def requires_auth(func):
+    @wraps(func)
+    async def wrapper(self, update, context, *args, **kwargs):
+        user_id = update.effective_user.id if update.effective_user else None
+
+        if len(self.id_auths) > 0:
+            if user_id not in self.id_auths:
+                await update.message.reply_text("❌ No estás autorizado para usar este bot.")
+                return
+
+        return await func(self, update, context, *args, **kwargs)
+
+    return wrapper
+
 
 class TelegramConversation(IConversationPort):
     def __init__(self, update, context: ContextTypes.DEFAULT_TYPE):
@@ -75,7 +91,11 @@ class TelegramBotCommand():
     def __init__(self, telegram_api_token, id_auths, flow: IBotFlowPort):
         
         self.token = telegram_api_token
-        self.id_auths = id_auths
+        
+        self.id_auths = []
+        if id_auths != "":
+            self.id_auths = str(id_auths).split(",")
+        
         self.flow = flow
         self.application: Application = None
         self.application = ApplicationBuilder().token(self.token).build()
@@ -94,31 +114,37 @@ class TelegramBotCommand():
         except InvalidToken as e:
             raise TelegramInvalidTokenException("Token no valido")
     
+    @requires_auth
     async def _start(self, update, context):
         conv = TelegramConversation(update, context)
         context.user_data["flow"] = self.flow
         await self.flow.start(conv, context.user_data)
-    
+
+    @requires_auth
     async def _help(self, update, context):
         conv = TelegramConversation(update, context)
         context.user_data["flow"] = self.flow
         await self.flow.help(conv, context.user_data)      
     
+    @requires_auth
     async def _cancel(self, update, context):
         context.user_data.clear()
         await update.message.reply_text("Operación cancelada.")  
     
+    @requires_auth
     async def handle_message(self, update, context):
         if "pending_callback" in context.user_data:
             cb = context.user_data.pop("pending_callback")
             context.user_data.pop("esperando_imagen", None)
             await cb(update.message.text)
     
+    @requires_auth
     async def handle_callback(self, update, context):
         if "pending_callback" in context.user_data:
             cb = context.user_data.pop("pending_callback")
             await cb(update.callback_query.data)
     
+    @requires_auth
     async def handle_photo(self, update, context):
         if context.user_data.get("esperando_imagen"):
             cb = context.user_data.pop("pending_callback")
@@ -127,6 +153,7 @@ class TelegramBotCommand():
             img_bytes = await file.download_as_bytearray()
             await cb(img_bytes)
 
+    @requires_auth
     async def handle_attachment(self, update, context):
         print("pasamos por aqui")
         if context.user_data.get("esperando_adjunto"):
